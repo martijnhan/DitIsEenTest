@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzieknoten Leren Lezen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            padding: 1.5rem 1rem 0.5rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #e0e0e0;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        /* Mode selector */
+        .mode-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 0.5rem 1.2rem;
+            border: 1px solid #444;
+            background: #2a2a3e;
+            color: #ccc;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            border-color: #7c6ef0;
+            color: #fff;
+        }
+
+        .mode-btn.active {
+            background: #7c6ef0;
+            border-color: #7c6ef0;
+            color: #fff;
+        }
+
+        /* Clef selector */
+        .clef-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+
+        .clef-btn {
+            padding: 0.4rem 1rem;
+            border: 1px solid #444;
+            background: #2a2a3e;
+            color: #ccc;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .clef-btn:hover {
+            border-color: #7c6ef0;
+        }
+
+        .clef-btn.active {
+            background: #3a3a5e;
+            border-color: #7c6ef0;
+            color: #fff;
+        }
+
+        /* Staff area */
+        .staff-container {
+            background: #f5f0e8;
+            border-radius: 1rem;
+            padding: 2rem 2.5rem;
+            margin: 0.5rem 1rem;
+            position: relative;
+            width: min(600px, 90vw);
+        }
+
+        canvas#staff {
+            width: 100%;
+            height: 200px;
+            display: block;
+        }
+
+        /* Feedback */
+        .feedback {
+            text-align: center;
+            font-size: 1.3rem;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.8rem 0;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .feedback.correct {
+            color: #4caf50;
+        }
+
+        .feedback.wrong {
+            color: #ef5350;
+        }
+
+        .feedback.hint {
+            color: #7c6ef0;
+        }
+
+        /* Score */
+        .score-bar {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: #aaa;
+        }
+
+        .score-bar span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .score-bar .num {
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 1.1rem;
+        }
+
+        /* Piano keyboard */
+        .piano-container {
+            margin: 1rem 0 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            height: 160px;
+        }
+
+        .key {
+            position: relative;
+            cursor: pointer;
+            transition: background 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .key.white {
+            width: 44px;
+            height: 160px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 0 0 6px 6px;
+            z-index: 1;
+            color: #999;
+        }
+
+        .key.white:hover {
+            background: #e8e0ff;
+        }
+
+        .key.white:active, .key.white.pressed {
+            background: #d0c4ff;
+        }
+
+        .key.black {
+            width: 28px;
+            height: 100px;
+            background: #333;
+            border: 1px solid #111;
+            border-radius: 0 0 4px 4px;
+            margin-left: -14px;
+            margin-right: -14px;
+            z-index: 2;
+            color: #888;
+            font-size: 0.65rem;
+        }
+
+        .key.black:hover {
+            background: #555;
+        }
+
+        .key.black:active, .key.black.pressed {
+            background: #7c6ef0;
+            color: #fff;
+        }
+
+        .key.highlight {
+            background: #7c6ef0 !important;
+            color: #fff !important;
+        }
+
+        .key .label {
+            pointer-events: none;
+        }
+
+        /* Level indicator */
+        .level-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .level-bar .level-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .level-bar .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #444;
+        }
+
+        .level-bar .dot.filled {
+            background: #7c6ef0;
+        }
+
+        /* Next button */
+        .next-btn {
+            display: none;
+            margin: 0.5rem auto;
+            padding: 0.6rem 2rem;
+            background: #7c6ef0;
+            color: #fff;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .next-btn:hover {
+            background: #6a5bd4;
+        }
+
+        .next-btn.visible {
+            display: block;
+        }
+
+        /* Info text */
+        .info {
+            text-align: center;
+            color: #777;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .key.white {
+                width: 32px;
+                height: 130px;
+            }
+            .key.black {
+                width: 22px;
+                height: 82px;
+                margin-left: -11px;
+                margin-right: -11px;
+            }
+            .staff-container {
+                padding: 1.5rem 1rem;
+            }
+            header h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Muzieknoten Leren Lezen</h1>
+</header>
+
+<div class="mode-bar">
+    <button class="mode-btn active" data-mode="leren">Leren</button>
+    <button class="mode-btn" data-mode="oefenen">Oefenen</button>
+    <button class="mode-btn" data-mode="uitdaging">Uitdaging</button>
+</div>
+
+<div class="clef-bar">
+    <button class="clef-btn active" data-clef="treble">Vioolsleutel</button>
+    <button class="clef-btn" data-clef="bass">Bassleutel</button>
+    <button class="clef-btn" data-clef="both">Beide</button>
+</div>
+
+<div class="level-bar">
+    <span>Niveau:</span>
+    <div class="level-dots">
+        <div class="dot filled"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <span id="level-label">1 — Noten op de lijnen</span>
+</div>
+
+<div class="staff-container">
+    <canvas id="staff" width="540" height="200"></canvas>
+</div>
+
+<div class="feedback" id="feedback"></div>
+
+<div class="score-bar" id="score-bar" style="display:none;">
+    <span>Goed: <span class="num" id="score-correct">0</span></span>
+    <span>Fout: <span class="num" id="score-wrong">0</span></span>
+    <span>Reeks: <span class="num" id="score-streak">0</span></span>
+</div>
+
+<button class="next-btn" id="next-btn">Volgende noot</button>
+
+<div class="piano-container">
+    <div class="piano" id="piano"></div>
+</div>
+
+<div class="info">
+    Klik op de toets van de piano die overeenkomt met de noot op de balk.<br>
+    Of speel de noot op je echte piano en klik daarna het antwoord aan.
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────────────
+const NOTE_NAMES_NL = {
+    'C': 'Do (C)', 'D': 'Re (D)', 'E': 'Mi (E)', 'F': 'Fa (F)',
+    'G': 'Sol (G)', 'A': 'La (A)', 'B': 'Si (B)'
+};
+
+// All notes from C3 to C6 with staff positions
+// position: semitones from middle C (C4 = 0), used to calculate Y on staff
+// Treble clef: middle C is on first ledger line below staff
+// Bass clef: middle C is on first ledger line above staff
+
+const TREBLE_NOTES = [
+    // Below staff
+    { note: 'C', octave: 4, name: 'C4', pos: 0 },
+    { note: 'D', octave: 4, name: 'D4', pos: 1 },
+    { note: 'E', octave: 4, name: 'E4', pos: 2 },
+    { note: 'F', octave: 4, name: 'F4', pos: 3 },
+    { note: 'G', octave: 4, name: 'G4', pos: 4 },
+    { note: 'A', octave: 4, name: 'A4', pos: 5 },
+    { note: 'B', octave: 4, name: 'B4', pos: 6 },
+    { note: 'C', octave: 5, name: 'C5', pos: 7 },
+    { note: 'D', octave: 5, name: 'D5', pos: 8 },
+    { note: 'E', octave: 5, name: 'E5', pos: 9 },
+    { note: 'F', octave: 5, name: 'F5', pos: 10 },
+    { note: 'G', octave: 5, name: 'G5', pos: 11 },
+    { note: 'A', octave: 5, name: 'A5', pos: 12 },
+    { note: 'B', octave: 5, name: 'B5', pos: 13 },
+    { note: 'C', octave: 6, name: 'C6', pos: 14 },
+];
+
+const BASS_NOTES = [
+    { note: 'C', octave: 2, name: 'C2', pos: -14 },
+    { note: 'D', octave: 2, name: 'D2', pos: -13 },
+    { note: 'E', octave: 2, name: 'E2', pos: -12 },
+    { note: 'F', octave: 2, name: 'F2', pos: -11 },
+    { note: 'G', octave: 2, name: 'G2', pos: -10 },
+    { note: 'A', octave: 2, name: 'A2', pos: -9 },
+    { note: 'B', octave: 2, name: 'B2', pos: -8 },
+    { note: 'C', octave: 3, name: 'C3', pos: -7 },
+    { note: 'D', octave: 3, name: 'D3', pos: -6 },
+    { note: 'E', octave: 3, name: 'E3', pos: -5 },
+    { note: 'F', octave: 3, name: 'F3', pos: -4 },
+    { note: 'G', octave: 3, name: 'G3', pos: -3 },
+    { note: 'A', octave: 3, name: 'A3', pos: -2 },
+    { note: 'B', octave: 3, name: 'B3', pos: -1 },
+    { note: 'C', octave: 4, name: 'C4', pos: 0 },
+];
+
+// Levels define which notes are available
+const LEVELS = [
+    { label: '1 — Noten op de lijnen', treble: ['E4','G4','B4','D5','F5'], bass: ['G2','B2','D3','F3','A3'] },
+    { label: '2 — Noten in de ruimtes', treble: ['F4','A4','C5','E5'], bass: ['A2','C3','E3','G3'] },
+    { label: '3 — Alle noten op de balk', treble: ['E4','F4','G4','A4','B4','C5','D5','E5','F5'], bass: ['G2','A2','B2','C3','D3','E3','F3','G3','A3'] },
+    { label: '4 — Met hulplijnen', treble: ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5'], bass: ['C2','D2','E2','F2','G2','A2','B2','C3','D3','E3','F3','G3','A3','B3','C4'] },
+    { label: '5 — Alle noten', treble: TREBLE_NOTES.map(n => n.name), bass: BASS_NOTES.map(n => n.name) },
+];
+
+// ─── State ───────────────────────────────────────────────────────────
+let mode = 'leren';        // leren | oefenen | uitdaging
+let clef = 'treble';       // treble | bass | both
+let level = 0;
+let currentNote = null;
+let currentClef = 'treble';
+let score = { correct: 0, wrong: 0, streak: 0, best: 0 };
+let answered = false;
+let challengeTimer = null;
+let challengeTimeLeft = 0;
+
+// ─── DOM refs ────────────────────────────────────────────────────────
+const canvas = document.getElementById('staff');
+const ctx = canvas.getContext('2d');
+const feedbackEl = document.getElementById('feedback');
+const nextBtn = document.getElementById('next-btn');
+const scoreBar = document.getElementById('score-bar');
+const pianoEl = document.getElementById('piano');
+
+// ─── Piano builder ──────────────────────────────────────────────────
+function buildPiano() {
+    pianoEl.innerHTML = '';
+    // Build 3 octaves: C3-B5 for a nice range
+    const octaves = [3, 4, 5];
+    const whiteNotes = ['C','D','E','F','G','A','B'];
+    const blackMap = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
+
+    for (const oct of octaves) {
+        for (const n of whiteNotes) {
+            const key = document.createElement('div');
+            key.className = 'key white';
+            key.dataset.note = n;
+            key.dataset.octave = oct;
+            key.dataset.name = n + oct;
+            key.innerHTML = `<span class="label">${n}${oct === 4 ? '' : oct}</span>`;
+            key.addEventListener('click', () => handleAnswer(n, oct));
+            pianoEl.appendChild(key);
+
+            // Black key after this white key?
+            if (blackMap[n]) {
+                const bkey = document.createElement('div');
+                bkey.className = 'key black';
+                bkey.dataset.note = blackMap[n];
+                bkey.dataset.octave = oct;
+                bkey.innerHTML = `<span class="label"></span>`;
+                // Black keys not used for natural note quiz, but shown for realism
+                bkey.addEventListener('click', () => {
+                    flashFeedback('We oefenen nu alleen stamtonen (witte toetsen)', 'hint');
+                });
+                pianoEl.appendChild(bkey);
+            }
+        }
+    }
+}
+
+// ─── Staff drawing ──────────────────────────────────────────────────
+function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width - 48; // padding
+    canvas.height = 200;
+}
+
+function drawStaff() {
+    resizeCanvas();
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const lineSpacing = 14;
+    const staffTop = h / 2 - 2 * lineSpacing;
+
+    // Draw 5 lines
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 5; i++) {
+        const y = staffTop + i * lineSpacing;
+        ctx.beginPath();
+        ctx.moveTo(50, y);
+        ctx.lineTo(w - 20, y);
+        ctx.stroke();
+    }
+
+    // Draw clef
+    drawClef(staffTop, lineSpacing);
+
+    // Draw note if set
+    if (currentNote) {
+        drawNote(staffTop, lineSpacing, w);
+    }
+}
+
+function drawClef(staffTop, ls) {
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${ls * 4.5}px serif`;
+    if (currentClef === 'treble') {
+        // Treble clef symbol
+        ctx.font = `${ls * 6.5}px serif`;
+        ctx.fillText('\u{1D11E}', 8, staffTop + ls * 4.3);
+    } else {
+        // Bass clef symbol
+        ctx.font = `${ls * 3.8}px serif`;
+        ctx.fillText('\u{1D122}', 12, staffTop + ls * 3.0);
+    }
+}
+
+function noteY(staffTop, lineSpacing, noteObj) {
+    // For treble clef: F5 is top line (pos 10), every pos step = half lineSpacing
+    // E4 (pos 2) is bottom line
+    // pos 10 = top line = staffTop
+    // pos 2 = bottom line = staffTop + 4*lineSpacing
+    // y = staffTop + (10 - pos) * lineSpacing/2
+
+    if (currentClef === 'treble') {
+        // F5 (pos 10) on top line, E4 (pos 2) on bottom line
+        return staffTop + (10 - noteObj.pos) * lineSpacing / 2;
+    } else {
+        // Bass clef: A3 (pos -2) on top line, G2 (pos -10) on bottom line
+        return staffTop + (-2 - noteObj.pos) * lineSpacing / 2;
+    }
+}
+
+function drawNote(staffTop, ls, canvasWidth) {
+    const allNotes = currentClef === 'treble' ? TREBLE_NOTES : BASS_NOTES;
+    const noteObj = allNotes.find(n => n.name === currentNote);
+    if (!noteObj) return;
+
+    const x = canvasWidth / 2 + 20;
+    const y = noteY(staffTop, ls, noteObj);
+    const rx = ls * 0.72;
+    const ry = ls * 0.52;
+
+    // Ledger lines
+    const topLineY = staffTop;
+    const bottomLineY = staffTop + 4 * ls;
+
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+
+    if (y > bottomLineY + ls * 0.3) {
+        // Below staff
+        for (let ly = bottomLineY + ls; ly <= y + 1; ly += ls) {
+            ctx.beginPath();
+            ctx.moveTo(x - rx - 8, ly);
+            ctx.lineTo(x + rx + 8, ly);
+            ctx.stroke();
+        }
+    }
+
+    if (y < topLineY - ls * 0.3) {
+        // Above staff
+        for (let ly = topLineY - ls; ly >= y - 1; ly -= ls) {
+            ctx.beginPath();
+            ctx.moveTo(x - rx - 8, ly);
+            ctx.lineTo(x + rx + 8, ly);
+            ctx.stroke();
+        }
+    }
+
+    // Note head (filled ellipse)
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stem
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (noteObj.pos >= 7 || (currentClef === 'bass' && noteObj.pos >= -5)) {
+        // Stem down
+        ctx.moveTo(x - rx + 2, y);
+        ctx.lineTo(x - rx + 2, y + ls * 3.5);
+    } else {
+        // Stem up
+        ctx.moveTo(x + rx - 2, y);
+        ctx.lineTo(x + rx - 2, y - ls * 3.5);
+    }
+    ctx.stroke();
+
+    // In learn mode, show note name
+    if (mode === 'leren') {
+        ctx.fillStyle = '#7c6ef0';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        const label = NOTE_NAMES_NL[noteObj.note] || noteObj.note;
+        ctx.fillText(`${label}`, x, y > staffTop + 2 * ls ? y - ls * 1.5 : y + ls * 2.5);
+        ctx.fillStyle = '#999';
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`(${noteObj.name})`, x, y > staffTop + 2 * ls ? y - ls * 1.5 + 16 : y + ls * 2.5 + 16);
+        ctx.textAlign = 'left';
+    }
+}
+
+// ─── Game logic ─────────────────────────────────────────────────────
+function getAvailableNotes() {
+    const lvl = LEVELS[level];
+    let notes = [];
+    if (clef === 'treble' || clef === 'both') {
+        notes = notes.concat(lvl.treble);
+    }
+    if (clef === 'bass' || clef === 'both') {
+        notes = notes.concat(lvl.bass);
+    }
+    return notes;
+}
+
+function pickNote() {
+    const available = getAvailableNotes();
+    let next;
+    do {
+        next = available[Math.floor(Math.random() * available.length)];
+    } while (next === currentNote && available.length > 1);
+
+    currentNote = next;
+    answered = false;
+
+    // Determine clef for this note
+    if (clef === 'both') {
+        const inTreble = TREBLE_NOTES.some(n => n.name === next);
+        const inBass = BASS_NOTES.some(n => n.name === next);
+        if (inTreble && inBass) {
+            currentClef = Math.random() > 0.5 ? 'treble' : 'bass';
+        } else {
+            currentClef = inTreble ? 'treble' : 'bass';
+        }
+    } else {
+        currentClef = clef;
+    }
+
+    clearHighlights();
+    feedbackEl.textContent = '';
+    feedbackEl.className = 'feedback';
+    nextBtn.classList.remove('visible');
+    drawStaff();
+
+    // In learn mode, highlight the correct key
+    if (mode === 'leren') {
+        highlightCorrectKey();
+    }
+
+    // Challenge timer
+    if (mode === 'uitdaging') {
+        challengeTimeLeft = 10;
+        updateTimerDisplay();
+        clearInterval(challengeTimer);
+        challengeTimer = setInterval(() => {
+            challengeTimeLeft--;
+            updateTimerDisplay();
+            if (challengeTimeLeft <= 0) {
+                clearInterval(challengeTimer);
+                handleTimeout();
+            }
+        }, 1000);
+    }
+}
+
+function updateTimerDisplay() {
+    if (mode === 'uitdaging' && !answered) {
+        feedbackEl.textContent = `Tijd: ${challengeTimeLeft}s`;
+        feedbackEl.className = 'feedback hint';
+    }
+}
+
+function handleTimeout() {
+    if (answered) return;
+    answered = true;
+    score.wrong++;
+    score.streak = 0;
+    updateScore();
+    flashFeedback(`Te laat! Het was ${currentNote}`, 'wrong');
+    highlightCorrectKey();
+    nextBtn.classList.add('visible');
+}
+
+function handleAnswer(note, octave) {
+    if (answered && mode !== 'leren') return;
+
+    const name = note + octave;
+    const allNotes = currentClef === 'treble' ? TREBLE_NOTES : BASS_NOTES;
+    const target = allNotes.find(n => n.name === currentNote);
+    if (!target) return;
+
+    if (mode === 'leren') {
+        // In learn mode, just show info and move to next
+        flashFeedback(`${NOTE_NAMES_NL[note]} — ${name}`, 'hint');
+        // Auto-advance after short delay
+        setTimeout(() => pickNote(), 1200);
+        return;
+    }
+
+    const correct = target.note === note && target.octave === octave;
+
+    if (correct) {
+        answered = true;
+        clearInterval(challengeTimer);
+        score.correct++;
+        score.streak++;
+        if (score.streak > score.best) score.best = score.streak;
+        updateScore();
+        flashFeedback('Goed!', 'correct');
+        highlightKey(name, true);
+        checkLevelUp();
+
+        if (mode === 'uitdaging') {
+            setTimeout(() => pickNote(), 600);
+        } else {
+            nextBtn.classList.add('visible');
+        }
+    } else {
+        score.wrong++;
+        score.streak = 0;
+        updateScore();
+        flashFeedback(`Fout! Probeer opnieuw.`, 'wrong');
+        highlightKey(name, false);
+        setTimeout(() => clearHighlights(), 500);
+    }
+}
+
+function checkLevelUp() {
+    // Level up after 10 correct in a row at current level
+    if (score.streak > 0 && score.streak % 10 === 0 && level < LEVELS.length - 1) {
+        level++;
+        updateLevelDisplay();
+        flashFeedback(`Niveau omhoog! ${LEVELS[level].label}`, 'hint');
+    }
+}
+
+function flashFeedback(msg, type) {
+    feedbackEl.textContent = msg;
+    feedbackEl.className = `feedback ${type}`;
+}
+
+function updateScore() {
+    document.getElementById('score-correct').textContent = score.correct;
+    document.getElementById('score-wrong').textContent = score.wrong;
+    document.getElementById('score-streak').textContent = score.streak;
+}
+
+function updateLevelDisplay() {
+    const dots = document.querySelectorAll('.level-bar .dot');
+    dots.forEach((d, i) => d.classList.toggle('filled', i <= level));
+    document.getElementById('level-label').textContent = LEVELS[level].label;
+}
+
+// ─── Piano helpers ──────────────────────────────────────────────────
+function clearHighlights() {
+    document.querySelectorAll('.key').forEach(k => {
+        k.classList.remove('highlight', 'pressed');
+    });
+}
+
+function highlightKey(name, correct) {
+    const key = document.querySelector(`.key[data-name="${name}"]`);
+    if (key) {
+        key.classList.add(correct ? 'highlight' : 'pressed');
+    }
+}
+
+function highlightCorrectKey() {
+    if (!currentNote) return;
+    const key = document.querySelector(`.key[data-name="${currentNote}"]`);
+    if (key) {
+        key.classList.add('highlight');
+    }
+}
+
+// ─── Event listeners ────────────────────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mode = btn.dataset.mode;
+        scoreBar.style.display = mode === 'leren' ? 'none' : 'flex';
+        score = { correct: 0, wrong: 0, streak: 0, best: 0 };
+        updateScore();
+        clearInterval(challengeTimer);
+        pickNote();
+    });
+});
+
+document.querySelectorAll('.clef-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.clef-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        clef = btn.dataset.clef;
+        pickNote();
+    });
+});
+
+nextBtn.addEventListener('click', () => pickNote());
+
+// Keyboard shortcuts: A-G for note input
+document.addEventListener('keydown', (e) => {
+    const noteMap = { 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E', 'f': 'F', 'g': 'G' };
+    const n = noteMap[e.key.toLowerCase()];
+    if (!n) {
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            if (nextBtn.classList.contains('visible')) {
+                pickNote();
+            }
+        }
+        return;
+    }
+
+    // Find the correct octave from the target note to guess against
+    if (currentNote) {
+        const allNotes = currentClef === 'treble' ? TREBLE_NOTES : BASS_NOTES;
+        const target = allNotes.find(nt => nt.name === currentNote);
+        if (target) {
+            handleAnswer(n, target.octave);
+        }
+    }
+});
+
+window.addEventListener('resize', drawStaff);
+
+// ─── Init ───────────────────────────────────────────────────────────
+buildPiano();
+updateLevelDisplay();
+pickNote();
+</script>
+
+</body>
+</html>
