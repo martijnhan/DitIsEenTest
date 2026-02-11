@@ -107,7 +107,7 @@
             <button id="startBtn" onclick="startCountdown()">Start</button>
             <button id="pauseBtn" onclick="pauseCountdown()" disabled>Pauze</button>
             <button id="stopBtn" onclick="stopCountdown()" disabled>Stop</button>
-            <button onclick="resetCountdown()">Reset</button>
+            <button id="resetBtn" onclick="resetCountdown()" disabled>Reset</button>
         </div>
     </div>
 
@@ -116,8 +116,6 @@
         let count = START_VALUE;
         let intervalId = null;
         let running = false;
-        let startTime = null;
-        let countAtStart = null;
 
         const counterEl = document.getElementById('counter');
         const progressEl = document.getElementById('progress');
@@ -125,6 +123,7 @@
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
 
         function formatNumber(n) {
             return n.toLocaleString('nl-NL');
@@ -136,59 +135,56 @@
             progressEl.style.width = pct + '%';
         }
 
+        let stopped = false;
+
+        function setButtons(start, pause, stop, reset) {
+            startBtn.disabled = !start;
+            pauseBtn.disabled = !pause;
+            stopBtn.disabled = !stop;
+            resetBtn.disabled = !reset;
+        }
+
         function startCountdown() {
-            if (running || count <= 0) return;
+            if (running || count <= 0 || stopped) return;
             running = true;
-            startBtn.disabled = true;
-            pauseBtn.disabled = false;
-            stopBtn.disabled = false;
-            startTime = performance.now();
-            countAtStart = count;
+            setButtons(false, true, true, false);
             infoEl.textContent = 'Aftellen...';
 
             intervalId = setInterval(() => {
-                const elapsed = performance.now() - startTime;
-                const stepped = Math.floor(elapsed);
-                count = Math.max(0, countAtStart - stepped);
+                count--;
                 updateDisplay();
 
                 if (count <= 0) {
                     clearInterval(intervalId);
                     running = false;
-                    startBtn.disabled = true;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
+                    setButtons(false, false, false, true);
                     infoEl.textContent = 'Klaar! De countdown is voltooid.';
                 }
-            }, 16);
+            }, 1000);
         }
 
         function pauseCountdown() {
             if (!running) return;
             clearInterval(intervalId);
             running = false;
-            startBtn.disabled = false;
-            pauseBtn.disabled = true;
-            stopBtn.disabled = false;
+            setButtons(true, false, true, true);
             infoEl.textContent = 'Gepauzeerd op ' + formatNumber(count);
         }
 
         function stopCountdown() {
             clearInterval(intervalId);
             running = false;
-            startBtn.disabled = false;
-            pauseBtn.disabled = true;
-            stopBtn.disabled = true;
-            infoEl.textContent = 'Gestopt op ' + formatNumber(count);
+            stopped = true;
+            setButtons(false, false, false, true);
+            infoEl.textContent = 'Gestopt op ' + formatNumber(count) + ' — druk op Reset om opnieuw te beginnen';
         }
 
         function resetCountdown() {
             clearInterval(intervalId);
             running = false;
+            stopped = false;
             count = START_VALUE;
-            startBtn.disabled = false;
-            pauseBtn.disabled = true;
-            stopBtn.disabled = true;
+            setButtons(true, false, false, false);
             updateDisplay();
             infoEl.textContent = 'Druk op Start om te beginnen';
         }
