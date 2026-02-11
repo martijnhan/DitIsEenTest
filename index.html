@@ -106,6 +106,7 @@
         <div class="controls">
             <button id="startBtn" onclick="startCountdown()">Start</button>
             <button id="pauseBtn" onclick="pauseCountdown()" disabled>Pauze</button>
+            <button id="stopBtn" onclick="stopCountdown()" disabled>Stop</button>
             <button onclick="resetCountdown()">Reset</button>
         </div>
     </div>
@@ -123,6 +124,7 @@
         const infoEl = document.getElementById('info');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
 
         function formatNumber(n) {
             return n.toLocaleString('nl-NL');
@@ -139,6 +141,7 @@
             running = true;
             startBtn.disabled = true;
             pauseBtn.disabled = false;
+            stopBtn.disabled = false;
             startTime = performance.now();
             countAtStart = count;
             infoEl.textContent = 'Aftellen...';
@@ -154,6 +157,7 @@
                     running = false;
                     startBtn.disabled = true;
                     pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
                     infoEl.textContent = 'Klaar! De countdown is voltooid.';
                 }
             }, 16);
@@ -165,7 +169,17 @@
             running = false;
             startBtn.disabled = false;
             pauseBtn.disabled = true;
+            stopBtn.disabled = false;
             infoEl.textContent = 'Gepauzeerd op ' + formatNumber(count);
+        }
+
+        function stopCountdown() {
+            clearInterval(intervalId);
+            running = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            infoEl.textContent = 'Gestopt op ' + formatNumber(count);
         }
 
         function resetCountdown() {
@@ -174,6 +188,7 @@
             count = START_VALUE;
             startBtn.disabled = false;
             pauseBtn.disabled = true;
+            stopBtn.disabled = true;
             updateDisplay();
             infoEl.textContent = 'Druk op Start om te beginnen';
         }
