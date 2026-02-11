@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown van 1.000.000 naar 0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0a0a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        #counter {
+            font-size: 6rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            min-width: 8ch;
+            display: inline-block;
+        }
+
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            border: 2px solid #7b2ff7;
+            background: transparent;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #7b2ff7;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .progress-bar {
+            margin-top: 2rem;
+            width: 400px;
+            max-width: 90vw;
+            height: 6px;
+            background: #1a1a4e;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+            transition: width 0.3s;
+        }
+
+        .info {
+            margin-top: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Countdown</h1>
+        <div id="counter">1.000.000</div>
+        <div class="progress-bar">
+            <div class="fill" id="progress"></div>
+        </div>
+        <div class="info" id="info">Druk op Start om te beginnen</div>
+        <div class="controls">
+            <button id="startBtn" onclick="startCountdown()">Start</button>
+            <button id="pauseBtn" onclick="pauseCountdown()" disabled>Pauze</button>
+            <button onclick="resetCountdown()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const START_VALUE = 1000000;
+        let count = START_VALUE;
+        let intervalId = null;
+        let running = false;
+        let startTime = null;
+        let countAtStart = null;
+
+        const counterEl = document.getElementById('counter');
+        const progressEl = document.getElementById('progress');
+        const infoEl = document.getElementById('info');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        function formatNumber(n) {
+            return n.toLocaleString('nl-NL');
+        }
+
+        function updateDisplay() {
+            counterEl.textContent = formatNumber(count);
+            const pct = ((START_VALUE - count) / START_VALUE) * 100;
+            progressEl.style.width = pct + '%';
+        }
+
+        function startCountdown() {
+            if (running || count <= 0) return;
+            running = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            startTime = performance.now();
+            countAtStart = count;
+            infoEl.textContent = 'Aftellen...';
+
+            intervalId = setInterval(() => {
+                const elapsed = performance.now() - startTime;
+                const stepped = Math.floor(elapsed);
+                count = Math.max(0, countAtStart - stepped);
+                updateDisplay();
+
+                if (count <= 0) {
+                    clearInterval(intervalId);
+                    running = false;
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = true;
+                    infoEl.textContent = 'Klaar! De countdown is voltooid.';
+                }
+            }, 16);
+        }
+
+        function pauseCountdown() {
+            if (!running) return;
+            clearInterval(intervalId);
+            running = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            infoEl.textContent = 'Gepauzeerd op ' + formatNumber(count);
+        }
+
+        function resetCountdown() {
+            clearInterval(intervalId);
+            running = false;
+            count = START_VALUE;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            updateDisplay();
+            infoEl.textContent = 'Druk op Start om te beginnen';
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
